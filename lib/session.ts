@@ -1,33 +1,33 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { resolveConfig } from "./db";
 
 const COOKIE = "im_session";
 const TTL    = 60 * 60 * 8; // 8 hours
 
-export interface SessionUser { email: string; name: string; }
-
-async function getSecret(): Promise<Uint8Array> {
-  const { sessionSecret } = await resolveConfig("interview-mailer");
-  return new TextEncoder().encode(sessionSecret);
+// Session secret — static env var, never from DB
+// Must be the same value used to sign and verify
+function getSecret(): Uint8Array {
+  const s = process.env.SESSION_SECRET;
+  if (!s) throw new Error("SESSION_SECRET environment variable is not set");
+  return new TextEncoder().encode(s);
 }
 
+export interface SessionUser { email: string; name: string; }
+
 export async function createSession(user: SessionUser): Promise<string> {
-  const secret = await getSecret();
   return new SignJWT({ email: user.email, name: user.name })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${TTL}s`)
-    .sign(secret);
+    .sign(getSecret());
 }
 
 export async function getSession(): Promise<SessionUser | null> {
   try {
-    const store  = await cookies();
-    const token  = store.get(COOKIE)?.value;
+    const store = await cookies();
+    const token = store.get(COOKIE)?.value;
     if (!token) return null;
-    const secret = await getSecret();
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, getSecret());
     return { email: payload.email as string, name: payload.name as string };
   } catch { return null; }
 }

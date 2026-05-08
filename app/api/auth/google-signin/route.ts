@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
     }
 
     const token = await createSession({ email: userEmail, name: userName });
-    const res   = NextResponse.json({ status: "ok", name: userName, email: userEmail });
+
+    // Return JSON with the token so the client can set it as a cookie and navigate
+    // We also set it server-side for reliability
+    const res = NextResponse.json({ status: "ok", name: userName, email: userEmail, token });
     res.cookies.set(sessionCookieOptions(token));
     return res;
 

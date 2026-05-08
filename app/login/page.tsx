@@ -33,7 +33,19 @@ function LoginContent() {
         });
         const data = await res.json();
         if (data.status === "ok") {
-          window.location.href = "/";
+          // Poll /api/auth/me until the session cookie is confirmed committed, then navigate
+          let attempts = 0;
+          const verify = async () => {
+            attempts++;
+            try {
+              const check = await fetch("/api/auth/me");
+              const me    = await check.json();
+              if (me.status === "ok") { window.location.replace("/"); return; }
+            } catch {}
+            if (attempts < 15) setTimeout(verify, 200);
+            else { setError("Session could not be confirmed. Please try again."); setLoading(false); }
+          };
+          setTimeout(verify, 150);
         } else if (data.status === "unauthorized") {
           setError(`${data.email || "Your account"} is not authorised to access this system.`);
         } else {
