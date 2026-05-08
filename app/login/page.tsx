@@ -33,7 +33,7 @@ function LoginContent() {
         });
         const data = await res.json();
         if (data.status === "ok") {
-          router.push("/"); router.refresh();
+          window.location.href = "/";
         } else if (data.status === "unauthorized") {
           setError(`${data.email || "Your account"} is not authorised to access this system.`);
         } else {
