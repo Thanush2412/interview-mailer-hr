@@ -15,7 +15,8 @@ export const FIELD_DEFINITIONS = [
   { key: "meetingLink",    label: "Meeting Link",      required: false, hint: "Rendered as a Join Meeting button" },
   { key: "evaluatorName",  label: "Interviewer Name",  required: false, hint: "Shown in interview details" },
   { key: "evaluatorEmail", label: "Interviewer Email", required: false, hint: "Receives the evaluator notification" },
-  { key: "emailStatus",    label: "Email Status Col",  required: false, hint: "Column where sent status is written back" },
+  { key: "resumeUrl",     label: "Resume / CV Link",  required: false, hint: "Shown as a View Resume button in the evaluator email" },
+  { key: "emailStatus",   label: "Email Status Col",  required: false, hint: "Column where sent status is written back" },
 ] as const;
 
 export type FieldKey = typeof FIELD_DEFINITIONS[number]["key"];

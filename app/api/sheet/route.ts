@@ -13,9 +13,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ status: "error", message: "GAS_URL is not configured" }, { status: 500 });
   }
 
-  const url = `${gasUrl}?action=getSheetData&url=${encodeURIComponent(sheetUrl)}&page=1&limit=1000`;
+  const page = searchParams.get("page") || "1";
+  const limit = searchParams.get("limit") || "50";
+
+  const targetUrl = new URL(gasUrl);
+  targetUrl.searchParams.set("action", "getSheetData");
+  targetUrl.searchParams.set("url", sheetUrl);
+  targetUrl.searchParams.set("page", page);
+  targetUrl.searchParams.set("limit", limit);
+
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(targetUrl.toString(), { cache: "no-store" });
     if (!res.ok) {
       const text = await res.text();
       return NextResponse.json({ status: "error", message: `GAS ${res.status}: ${text.slice(0, 200)}` }, { status: 502 });
