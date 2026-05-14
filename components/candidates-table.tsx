@@ -40,7 +40,7 @@ interface SheetResponse {
 
 function findHeader(headers: string[], keys: string[]): string | undefined {
   for (const key of keys) {
-    const match = headers.find((h) => h.toLowerCase() === key);
+    const match = headers.find((h) => h.toLowerCase().trim() === key.toLowerCase().trim());
     if (match) return match;
   }
 }
@@ -59,15 +59,15 @@ function getMapped(row: Candidate, mappedCol: string | undefined, fallbackKeys: 
 const mkGet = (mappingKey: keyof ColumnMapping, fallback: string[]) =>
   (r: Candidate, h: string[], m: ColumnMapping) => getMapped(r, m[mappingKey], fallback, h);
 
-const getEmail          = mkGet("email",          ["candidate mail id", "mail id", "to", "email", "recipient", "email address", "to email"]);
-const getName           = mkGet("name",           ["candidate name", "name", "full name", "candidate"]);
-const getId             = mkGet("candidateId",    ["candidate id", "candidateid", "id", "candidate_id"]);
-const getType           = mkGet("interviewType",  ["mode of interview", "interview type", "type", "mode", "interview mode"]);
-const getDate           = mkGet("date",           ["interview scheduled date", "interview date", "date", "scheduled date"]);
-const getTime           = mkGet("time",           ["time", "interview time", "scheduled time", "reporting time"]);
-const getLink           = mkGet("meetingLink",    ["meeting link", "link", "meet link", "zoom link", "teams link"]);
-const getJob            = mkGet("jobTitle",       ["role interviewed for", "name of the role", "job title", "position", "role", "designation"]);
-const getEvaluator      = mkGet("evaluatorName",  ["interview evaluator", "evaluator", "interviewer", "interviewer name"]);
+const getEmail          = mkGet("email",          ["candidate mail id", "mail id", "to", "email", "recipient", "email id", "email address", "to email", "candidate email"]);
+const getName           = mkGet("name",           ["candidate name", "name", "full name", "candidate", "candidate_name"]);
+const getId             = mkGet("candidateId",    ["candidate id", "candidateid", "id", "candidate_id", "roll no", "roll number"]);
+const getType           = mkGet("interviewType",  ["mode of interview", "interview type", "type", "mode", "interview mode", "mode_of_interview"]);
+const getDate           = mkGet("date",           ["interview scheduled date", "interview date", "date", "scheduled date", "interview_date"]);
+const getTime           = mkGet("time",           ["time", "interview time", "scheduled time", "reporting time", "interview_time"]);
+const getLink           = mkGet("meetingLink",    ["meeting link", "link", "meet link", "zoom link", "teams link", "interview link", "google meet"]);
+const getJob            = mkGet("jobTitle",       ["role interviewed for", "name of the role", "job title", "position", "role", "designation", "job_title"]);
+const getEvaluator      = mkGet("evaluatorName",  ["interview evaluator", "evaluator", "interviewer", "interviewer name", "evaluator name"]);
 const getEvaluatorEmail = mkGet("evaluatorEmail", ["interviewer email", "evaluator email", "interviewer mail", "evaluator mail"]);
 const getResumeUrl      = mkGet("resumeUrl",      ["resume", "resume url", "resume link", "cv", "cv link", "cv url"]);
 const getEmailStatus    = (r: Candidate, h: string[], m: ColumnMapping) =>
@@ -229,7 +229,7 @@ function EmailStatusBadge({ value }: { value: string }) {
 }
 
 const TYPE_COLS   = new Set(["mode of interview", "interview type", "type", "mode", "interview mode"]);
-const HIDDEN_SYSTEM = new Set(["email status", "_rowindex"]);
+const HIDDEN_SYSTEM = new Set(["email status", "mail sent status", "_rowindex"]);
 
 const KNOWN_TYPES = new Set([
   "client", "client interview", "virtual client",
@@ -295,8 +295,11 @@ export default function CandidatesTable({ sheetUrl, columnMapping = {} }: { shee
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const selectableHeaders = useMemo(
-    () => headers.filter((h) => !HIDDEN_SYSTEM.has(h.toLowerCase()) && h.trim() !== ""),
-    [headers]
+    () => headers.filter((h) => {
+      const lower = h.toLowerCase().trim();
+      return !HIDDEN_SYSTEM.has(lower) && h !== emailStatusHeader && h.trim() !== "";
+    }),
+    [headers, emailStatusHeader]
   );
   const emailStatusHeader = useMemo(() => {
     // Use mapped column if set, otherwise find by known names
