@@ -294,6 +294,12 @@ export default function CandidatesTable({ sheetUrl, columnMapping = {} }: { shee
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const emailStatusHeader = useMemo(() => {
+    // Use mapped column if set, otherwise find by known names
+    if (columnMapping.emailStatus) return columnMapping.emailStatus;
+    return headers.find((h) => ["email status", "mail sent status"].includes(h.toLowerCase()));
+  }, [headers, columnMapping]);
+
   const selectableHeaders = useMemo(
     () => headers.filter((h) => {
       const lower = h.toLowerCase().trim();
@@ -301,11 +307,6 @@ export default function CandidatesTable({ sheetUrl, columnMapping = {} }: { shee
     }),
     [headers, emailStatusHeader]
   );
-  const emailStatusHeader = useMemo(() => {
-    // Use mapped column if set, otherwise find by known names
-    if (columnMapping.emailStatus) return columnMapping.emailStatus;
-    return headers.find((h) => ["email status", "mail sent status"].includes(h.toLowerCase()));
-  }, [headers, columnMapping]);
 
   const filtered = useMemo(() => {
     let rows = allRows;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { getDb } from "@/lib/db";
+import { getAdmins, upsertAdminEmail, deleteAdminEmail } from "@/lib/db";
 
 const APP_ID = "interview-mailer";
 
@@ -14,12 +14,8 @@ export async function GET() {
   const user = await requireAuth();
   if (!user) return NextResponse.json({ status: "error", message: "Unauthorised" }, { status: 401 });
 
-  const db  = await getDb();
-  const res = await db.query(
-    "SELECT email, name FROM admin_emails WHERE app_id = $1 ORDER BY email",
-    [APP_ID]
-  );
-  return NextResponse.json({ status: "ok", admins: res.rows });
+  const admins = await getAdmins(APP_ID);
+  return NextResponse.json({ status: "ok", admins });
 }
 
 export async function POST(req: NextRequest) {
@@ -31,13 +27,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ status: "error", message: "Valid email required" }, { status: 400 });
   }
 
-  const db = await getDb();
-  await db.query(
-    `INSERT INTO admin_emails (app_id, email, name)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (app_id, email) DO UPDATE SET name = COALESCE($3, admin_emails.name)`,
-    [APP_ID, email.toLowerCase().trim(), name?.trim() || null]
-  );
+  await upsertAdminEmail(APP_ID, email, name);
   return NextResponse.json({ status: "added" });
 }
 
@@ -52,7 +42,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ status: "error", message: "You cannot remove yourself" }, { status: 400 });
   }
 
-  const db = await getDb();
-  await db.query("DELETE FROM admin_emails WHERE app_id = $1 AND email = $2", [APP_ID, email.toLowerCase().trim()]);
+  await deleteAdminEmail(APP_ID, email);
   return NextResponse.json({ status: "removed" });
 }

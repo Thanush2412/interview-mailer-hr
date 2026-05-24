@@ -8,11 +8,13 @@ export async function POST(req: NextRequest) {
   try {
     const { credential } = await req.json() as { credential?: string };
     if (!credential) {
+      console.log("[auth:im] No credential provided");
       return NextResponse.json({ status: "error", message: "No credential provided" }, { status: 400 });
     }
 
     const parts = credential.split(".");
     if (parts.length !== 3) {
+      console.log("[auth:im] Invalid credential format");
       return NextResponse.json({ status: "error", message: "Invalid credential" }, { status: 400 });
     }
 
@@ -21,13 +23,16 @@ export async function POST(req: NextRequest) {
     const userName  = (payload.name  as string) || userEmail;
 
     if (!userEmail) {
+      console.log("[auth:im] No email in payload");
       return NextResponse.json({ status: "error", message: "No email in token" }, { status: 400 });
     }
 
+    console.log(`[auth:im] Verifying ${userEmail}...`);
     const allowed = await getAdminEmails(APP_ID);
-    console.log(`[auth:im] ${userEmail} | allowed (${allowed.length}):`, allowed);
+    console.log(`[auth:im] Allowed list:`, allowed);
 
     if (allowed.length > 0 && !allowed.includes(userEmail)) {
+      console.log(`[auth:im] ${userEmail} not in allowed list`);
       return NextResponse.json({
         status:  "unauthorized",
         email:   userEmail,
@@ -35,16 +40,17 @@ export async function POST(req: NextRequest) {
       }, { status: 403 });
     }
 
+    console.log(`[auth:im] Creating session for ${userEmail}`);
     const token = await createSession({ email: userEmail, name: userName });
 
-    // Return JSON with the token so the client can set it as a cookie and navigate
-    // We also set it server-side for reliability
     const res = NextResponse.json({ status: "ok", name: userName, email: userEmail, token });
     res.cookies.set(sessionCookieOptions(token));
     return res;
 
   } catch (err: unknown) {
+    console.error("[auth:im] 500 Error:", err);
     const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ status: "error", message }, { status: 500 });
+    const stack = err instanceof Error ? err.stack : undefined;
+    return NextResponse.json({ status: "error", message, stack }, { status: 500 });
   }
 }
