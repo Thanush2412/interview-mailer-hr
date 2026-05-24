@@ -28,7 +28,18 @@ export async function GET(req: NextRequest) {
       const text = await res.text();
       return NextResponse.json({ status: "error", message: `GAS ${res.status}: ${text.slice(0, 200)}` }, { status: 502 });
     }
-    return NextResponse.json(await res.json());
+    const text = await res.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      console.error("[sheet API] GAS returned non-JSON:", text.slice(0, 300));
+      return NextResponse.json({ 
+        status: "error", 
+        message: `GAS returned unexpected response: ${text.slice(0, 200)}` 
+      }, { status: 502 });
+    }
+    return NextResponse.json(json);
   } catch (err: unknown) {
     console.error("[sheet API error]", err);
     return NextResponse.json({ 
