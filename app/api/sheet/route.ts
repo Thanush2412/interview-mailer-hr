@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ status: "error", message: "No sheet URL provided" }, { status: 400 });
     }
     if (!gasUrl) {
-      return NextResponse.json({ status: "error", message: "GAS_URL is not configured" }, { status: 500 });
+      return NextResponse.json({ status: "error", message: "GAS URL is not configured. Please set it in Settings." }, { status: 500 });
     }
 
     const page = searchParams.get("page") || "1";

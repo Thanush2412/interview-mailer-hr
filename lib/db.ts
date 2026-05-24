@@ -68,13 +68,12 @@ export async function resolveConfig(appId: string): Promise<{
   googleClientId: string;
   sessionSecret:  string;
 }> {
-  let row: AppConfig | null = null;
-  try { row = await getConfig(appId); } catch { /* fall through */ }
+  const row = await getConfig(appId);
   return {
-    sheetUrl:       row?.sheet_url         || process.env.NEXT_PUBLIC_SHEET_URL || "",
-    gasUrl:         row?.gas_url           || process.env.GAS_URL               || "",
-    googleClientId: row?.google_client_id  || process.env.GOOGLE_CLIENT_ID      || "",
-    sessionSecret:  row?.session_secret    || process.env.SESSION_SECRET        || "",
+    sheetUrl:       row?.sheet_url        || "",
+    gasUrl:         row?.gas_url          || "",
+    googleClientId: row?.google_client_id || "",
+    sessionSecret:  row?.session_secret   || "",
   };
 }
 
