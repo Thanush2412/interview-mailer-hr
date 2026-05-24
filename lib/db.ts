@@ -1,54 +1,8 @@
-import { Pool } from "pg";
+import { getFirestore } from "./firebase";
+import type { Firestore } from "firebase-admin/firestore";
 
-declare global {
-  // eslint-disable-next-line no-var
-  var _pgPool: Pool | undefined;
-}
-
-function getPool(): Pool {
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set");
-  if (process.env.NODE_ENV === "development") {
-    if (!global._pgPool) {
-      global._pgPool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false },
-      });
-    }
-    return global._pgPool;
-  }
-  return new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-}
-
-let initialised = false;
-export async function getDb(): Promise<Pool> {
-  const pool = getPool();
-  if (!initialised) {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS app_config (
-        app_id            TEXT PRIMARY KEY,
-        sheet_url         TEXT,
-        gas_url           TEXT,
-        column_map        JSONB,
-        google_client_id  TEXT,
-        google_client_sec TEXT,
-        session_secret    TEXT,
-        updated_at        TIMESTAMPTZ DEFAULT NOW()
-      );
-      CREATE TABLE IF NOT EXISTS admin_emails (
-        app_id  TEXT NOT NULL,
-        email   TEXT NOT NULL,
-        name    TEXT,
-        PRIMARY KEY (app_id, email)
-      );
-    `);
-    await pool.query(`
-      ALTER TABLE app_config ADD COLUMN IF NOT EXISTS google_client_id  TEXT;
-      ALTER TABLE app_config ADD COLUMN IF NOT EXISTS google_client_sec TEXT;
-      ALTER TABLE app_config ADD COLUMN IF NOT EXISTS session_secret    TEXT;
-    `).catch(() => {});
-    initialised = true;
-  }
-  return pool;
+export async function getDb(): Promise<Firestore> {
+  return getFirestore();
 }
 
 export interface AppConfig {
@@ -63,9 +17,10 @@ export interface AppConfig {
 }
 
 export async function getConfig(appId: string): Promise<AppConfig | null> {
-  const db  = await getDb();
-  const res = await db.query("SELECT * FROM app_config WHERE app_id = $1", [appId]);
-  return (res.rows[0] as AppConfig) ?? null;
+  const db = await getDb();
+  const doc = await db.collection("app_config").doc(appId).get();
+  if (!doc.exists) return null;
+  return doc.data() as AppConfig;
 }
 
 export async function upsertConfig(appId: string, fields: {
@@ -77,26 +32,34 @@ export async function upsertConfig(appId: string, fields: {
   sessionSecret?:   string;
 }) {
   const db = await getDb();
-  await db.query(`
-    INSERT INTO app_config (app_id, sheet_url, gas_url, column_map, google_client_id, google_client_sec, session_secret, updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-    ON CONFLICT (app_id) DO UPDATE SET
-      sheet_url         = COALESCE($2, app_config.sheet_url),
-      gas_url           = COALESCE($3, app_config.gas_url),
-      column_map        = COALESCE($4, app_config.column_map),
-      google_client_id  = COALESCE($5, app_config.google_client_id),
-      google_client_sec = COALESCE($6, app_config.google_client_sec),
-      session_secret    = COALESCE($7, app_config.session_secret),
-      updated_at        = NOW()
-  `, [
-    appId,
-    fields.sheetUrl        ?? null,
-    fields.gasUrl          ?? null,
-    fields.columnMap       ? JSON.stringify(fields.columnMap) : null,
-    fields.googleClientId  ?? null,
-    fields.googleClientSec ?? null,
-    fields.sessionSecret   ?? null,
-  ]);
+  const docRef = db.collection("app_config").doc(appId);
+  const doc = await docRef.get();
+  
+  const updateData: Record<string, unknown> = {
+    updated_at: new Date(),
+  };
+  
+  if (fields.sheetUrl !== undefined) updateData.sheet_url = fields.sheetUrl;
+  if (fields.gasUrl !== undefined) updateData.gas_url = fields.gasUrl;
+  if (fields.columnMap !== undefined) updateData.column_map = fields.columnMap;
+  if (fields.googleClientId !== undefined) updateData.google_client_id = fields.googleClientId;
+  if (fields.googleClientSec !== undefined) updateData.google_client_sec = fields.googleClientSec;
+  if (fields.sessionSecret !== undefined) updateData.session_secret = fields.sessionSecret;
+  
+  if (doc.exists) {
+    await docRef.update(updateData);
+  } else {
+    await docRef.set({
+      app_id: appId,
+      sheet_url: fields.sheetUrl ?? null,
+      gas_url: fields.gasUrl ?? null,
+      column_map: fields.columnMap ?? null,
+      google_client_id: fields.googleClientId ?? null,
+      google_client_sec: fields.googleClientSec ?? null,
+      session_secret: fields.sessionSecret ?? null,
+      updated_at: new Date(),
+    });
+  }
 }
 
 export async function resolveConfig(appId: string): Promise<{
@@ -116,22 +79,52 @@ export async function resolveConfig(appId: string): Promise<{
 }
 
 export async function getAdminEmails(appId: string): Promise<string[]> {
-  const db  = await getDb();
-  const res = await db.query("SELECT email FROM admin_emails WHERE app_id = $1", [appId]);
-  return res.rows.map((r: { email: string }) => r.email.toLowerCase().trim());
+  const db = await getDb();
+  const snapshot = await db.collection("admin_emails")
+    .where("app_id", "==", appId)
+    .get();
+  return snapshot.docs.map(doc => doc.data().email.toLowerCase().trim());
+}
+
+// Alias used by admins API route
+export async function getAdmins(appId: string): Promise<{ email: string; name: string | null }[]> {
+  const db = await getDb();
+  const snapshot = await db.collection("admin_emails")
+    .where("app_id", "==", appId)
+    .get();
+  
+  // Sort in memory instead of using orderBy to avoid index requirement
+  const admins = snapshot.docs.map(doc => ({
+    email: doc.data().email,
+    name: doc.data().name ?? null,
+  }));
+  
+  return admins.sort((a, b) => a.email.localeCompare(b.email));
 }
 
 export async function upsertAdminEmail(appId: string, email: string, name?: string) {
   const db = await getDb();
-  await db.query(`
-    INSERT INTO admin_emails (app_id, email, name)
-    VALUES ($1, $2, $3)
-    ON CONFLICT (app_id, email) DO UPDATE SET name = COALESCE($3, admin_emails.name)
-  `, [appId, email.toLowerCase().trim(), name ?? null]);
+  const normalizedEmail = email.toLowerCase().trim();
+  const docId = `${appId}_${normalizedEmail}`;
+  const docRef = db.collection("admin_emails").doc(docId);
+  const doc = await docRef.get();
+  
+  if (doc.exists) {
+    await docRef.update({
+      name: name ?? doc.data()?.name ?? null,
+    });
+  } else {
+    await docRef.set({
+      app_id: appId,
+      email: normalizedEmail,
+      name: name ?? null,
+    });
+  }
 }
 
 export async function deleteAdminEmail(appId: string, email: string) {
   const db = await getDb();
-  await db.query("DELETE FROM admin_emails WHERE app_id = $1 AND email = $2",
-    [appId, email.toLowerCase().trim()]);
+  const normalizedEmail = email.toLowerCase().trim();
+  const docId = `${appId}_${normalizedEmail}`;
+  await db.collection("admin_emails").doc(docId).delete();
 }
