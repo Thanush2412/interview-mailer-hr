@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -250,6 +250,7 @@ export default function CandidatesTable({ sheetUrl, columnMapping = {} }: { shee
   const [totalRows, setTotalRows]       = useState(0);
   const [visibleCols, setVisibleCols]   = useState<Set<string>>(new Set());
   const [colsInit, setColsInit]         = useState(false);
+  const colsInitRef                     = useRef(false);
   const [selected, setSelected]         = useState<Set<number>>(new Set());
   const [bulkOpen, setBulkOpen]         = useState(false);
   const [bulkSending, setBulkSending]   = useState(false);
@@ -259,6 +260,7 @@ export default function CandidatesTable({ sheetUrl, columnMapping = {} }: { shee
   // Reset state when sheetUrl changes
   useEffect(() => {
     setColsInit(false);
+    colsInitRef.current = false;
     setVisibleCols(new Set());
     setAllRows([]);
     setHeaders([]);
@@ -273,25 +275,37 @@ export default function CandidatesTable({ sheetUrl, columnMapping = {} }: { shee
     try {
       // Fetch all data (no limit) to allow client-side searching and sorting
       const res  = await fetch(`/api/sheet?url=${encodeURIComponent(sheetUrl)}`);
-      const json: SheetResponse = await res.json();
+      const text = await res.text();
+      let json: SheetResponse;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        console.error("[fetchData] Non-JSON response:", text.slice(0, 300));
+        toast.error(`Server returned unexpected response (${res.status})`);
+        return;
+      }
       if (json.status === "success") {
-        setHeaders(json.headers.map((h: unknown) => (h == null ? "" : String(h))));
+        const coercedHeaders = json.headers.map((h: unknown) => (h == null ? "" : String(h)));
+        setHeaders(coercedHeaders);
         setAllRows(json.data); // Backend now returns all rows, reversed (newest first)
         setTotalRows(json.data.length);
         setSelected(new Set());
-        if (!colsInit) {
-          setVisibleCols(new Set(json.headers.filter((h) => !HIDDEN_SYSTEM.has(h.toLowerCase()) && h.trim() !== "")));
+        if (!colsInitRef.current) {
+          colsInitRef.current = true;
           setColsInit(true);
+          setVisibleCols(new Set(coercedHeaders.filter((h) => !HIDDEN_SYSTEM.has(h.toLowerCase()) && h.trim() !== "")));
         }
       } else {
         toast.error(json.message || "Failed to load sheet data");
       }
-    } catch {
-      toast.error("Network error loading sheet");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[fetchData] error:", msg);
+      toast.error(`Network error loading sheet: ${msg}`);
     } finally {
       setLoading(false);
     }
-  }, [sheetUrl, colsInit]);
+  }, [sheetUrl]); // colsInit removed — using ref to avoid re-creating fetchData on init
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
