@@ -211,7 +211,7 @@ We request you to kindly acknowledge this email and confirm your availability fo
 
 // ── badges ─────────────────────────────────────────────────────────────────────
 function TypeBadge({ value }: { value: string }) {
-  const v = value.toLowerCase();
+  const v = (value ?? "").toLowerCase();
   if (v.includes("client"))   return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 border-purple-200">Client</Badge>;
   if (v.includes("virtual") || v.includes("online") || v.includes("zoom"))
     return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200">Virtual</Badge>;
@@ -221,11 +221,12 @@ function TypeBadge({ value }: { value: string }) {
 }
 
 function EmailStatusBadge({ value }: { value: string }) {
-  if (!value) return <span className="text-muted-foreground text-xs">—</span>;
-  if (value.startsWith("✓")) return <span className="text-green-600 text-xs font-medium flex items-center gap-1"><CheckSquare className="h-3 w-3" />{value}</span>;
-  if (value.startsWith("✗")) return <span className="text-red-500 text-xs font-medium">{value}</span>;
-  if (value === "Skipped")   return <span className="text-muted-foreground text-xs">Skipped</span>;
-  return <span className="text-xs">{value}</span>;
+  const v = value ?? "";
+  if (!v) return <span className="text-muted-foreground text-xs">—</span>;
+  if (v.startsWith("✓")) return <span className="text-green-600 text-xs font-medium flex items-center gap-1"><CheckSquare className="h-3 w-3" />{v}</span>;
+  if (v.startsWith("✗")) return <span className="text-red-500 text-xs font-medium">{v}</span>;
+  if (v === "Skipped")   return <span className="text-muted-foreground text-xs">Skipped</span>;
+  return <span className="text-xs">{v}</span>;
 }
 
 const TYPE_COLS   = new Set(["mode of interview", "interview type", "type", "mode", "interview mode"]);
@@ -274,7 +275,7 @@ export default function CandidatesTable({ sheetUrl, columnMapping = {} }: { shee
       const res  = await fetch(`/api/sheet?url=${encodeURIComponent(sheetUrl)}`);
       const json: SheetResponse = await res.json();
       if (json.status === "success") {
-        setHeaders(json.headers);
+        setHeaders(json.headers.map((h: unknown) => (h == null ? "" : String(h))));
         setAllRows(json.data); // Backend now returns all rows, reversed (newest first)
         setTotalRows(json.data.length);
         setSelected(new Set());
@@ -302,6 +303,7 @@ export default function CandidatesTable({ sheetUrl, columnMapping = {} }: { shee
 
   const selectableHeaders = useMemo(
     () => headers.filter((h) => {
+      if (typeof h !== "string") return false;
       const lower = h.toLowerCase().trim();
       return !HIDDEN_SYSTEM.has(lower) && h !== emailStatusHeader && h.trim() !== "";
     }),
