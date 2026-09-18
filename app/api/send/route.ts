@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
   }
   try {
     const res = await fetch(gasUrl, {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=UTF-8" },
       body: JSON.stringify(body),
     });
     return NextResponse.json(await res.json());

@@ -124,16 +124,28 @@ function renderPanelCardHtml(panelName: string, panelDesignation?: string, panel
   </div>`;
 }
 
+function encodeEmojisToEntities(text: string): string {
+  return String(text || "").replace(
+    /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDDFF]|[\u{1F300}-\u{1FAFF}]|[\u{2600}-\u{27BF}])/gu,
+    (match) => {
+      const codePoint = match.codePointAt(0);
+      return codePoint ? `&#${codePoint};` : match;
+    }
+  );
+}
+
 function wrapCallLetterHtml(subtitle: string, contentHtml: string): string {
+  const safeContent = encodeEmojisToEntities(contentHtml);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FACE Prep | Interview Call Letter</title>
 </head>
-<body style="margin:0;padding:0;background-color:#F4F6F9;font-family:Verdana,Geneva,sans-serif;-webkit-font-smoothing:antialiased;">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F4F6F9;padding:30px 12px;">
+<body style="margin:0;padding:0;background-color:#F4F6F9;font-family:Verdana,Geneva,'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif;-webkit-font-smoothing:antialiased;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F4F6F9;padding:30px 12px;font-family:Verdana,Geneva,'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif;">
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.08);">
@@ -149,8 +161,8 @@ function wrapCallLetterHtml(subtitle: string, contentHtml: string): string {
             </td>
           </tr>
           <tr>
-            <td style="padding:36px 40px 24px;color:#2D3748;line-height:1.75;font-size:14px;">
-              ${contentHtml}
+            <td style="padding:36px 40px 24px;color:#2D3748;line-height:1.75;font-size:14px;font-family:Verdana,Geneva,'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif;">
+              ${safeContent}
             </td>
           </tr>
           <tr>
@@ -971,7 +983,7 @@ export default function CandidatesTable({ sheetUrl, columnMapping = {} }: { shee
     try {
       const res = await fetch("/api/send", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
         body: JSON.stringify({
           sheetUrl,
           rowIndex: row._rowIndex,
@@ -1032,7 +1044,7 @@ export default function CandidatesTable({ sheetUrl, columnMapping = {} }: { shee
       try {
         const res = await fetch("/api/send", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json; charset=UTF-8" },
           body: JSON.stringify({
             sheetUrl,
             rowIndex: row._rowIndex,
