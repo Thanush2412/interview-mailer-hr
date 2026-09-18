@@ -13,10 +13,12 @@ export const FIELD_DEFINITIONS = [
   { key: "time",           label: "Interview Time",    required: false, hint: "Shown in interview details" },
   { key: "jobTitle",       label: "Job Title / Role",  required: false, hint: "Used in subject and body" },
   { key: "meetingLink",    label: "Meeting Link",      required: false, hint: "Rendered as a Join Meeting button" },
-  { key: "evaluatorName",  label: "Interviewer Name",  required: false, hint: "Shown in interview details" },
-  { key: "evaluatorEmail", label: "Interviewer Email", required: false, hint: "Receives the evaluator notification" },
-  { key: "resumeUrl",     label: "Resume / CV Link",  required: false, hint: "Shown as a View Resume button in the evaluator email" },
-  { key: "emailStatus",   label: "Email Status Col",  required: false, hint: "Column where sent status is written back" },
+  { key: "evaluatorName",     label: "Panel Member / Interviewer Name", required: false, hint: "Shown in interview details & panel card" },
+  { key: "panelDesignation",  label: "Panel Member Designation",       required: false, hint: "E.g. Lead Technical Evaluator, Head of Delivery" },
+  { key: "panelLinkedin",     label: "Panel Member LinkedIn URL",      required: false, hint: "LinkedIn profile URL for the panel card button" },
+  { key: "evaluatorEmail",    label: "Interviewer Email",              required: false, hint: "Receives the evaluator notification" },
+  { key: "resumeUrl",         label: "Resume / CV Link",               required: false, hint: "Shown as a View Resume button in the evaluator email" },
+  { key: "emailStatus",       label: "Email Status Col",               required: false, hint: "Column where sent status is written back" },
 ] as const;
 
 export type FieldKey = typeof FIELD_DEFINITIONS[number]["key"];
