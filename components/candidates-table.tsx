@@ -151,7 +151,7 @@ function wrapCallLetterHtml(subtitle: string, contentHtml: string): string {
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.08);">
           <tr>
             <td style="background-color:#1A1A1A;padding:28px 40px;border-bottom:4px solid #f05136;">
-              <img src="https://faceprep.in/wp-content/uploads/2023/10/Vector.png" alt="FACE Prep" width="110" style="display:block;border:0;margin-bottom:14px;"/>
+              <img src="https://faceprep.in/images/brand/wordmark-on-dark.png" alt="FACE Prep" width="140" style="display:block;border:0;margin-bottom:14px;height:auto;"/>
               <p style="margin:0;font-family:Georgia,serif;font-size:24px;font-weight:bold;color:#ffffff;line-height:1.2;">
                 Interview Call Letter
               </p>
@@ -165,8 +165,9 @@ function wrapCallLetterHtml(subtitle: string, contentHtml: string): string {
               ${safeContent}
             </td>
           </tr>
+          <!-- SIGN-OFF -->
           <tr>
-            <td style="padding:16px 40px 32px;border-top:1px solid #F1F5F9;font-size:13px;color:#64748B;">
+            <td id="call-letter-signature" style="padding:16px 40px 32px;border-top:1px solid #F1F5F9;font-size:13px;color:#64748B;">
               Warm regards,<br/>
               <strong style="color:#1A1A1A;font-size:14px;">Talent Acquisition Team</strong><br/>
               FACE Prep
@@ -215,7 +216,7 @@ function buildTemplate(
   // ── 1. Virtual Interview (Internal) ─────────────────────────────────────────
   if (t === "virtual" || t === "online" || t === "zoom" || t === "teams" || t === "google meet") {
     const roleLabel = jobTitle || "the position";
-    const subject = `FACE Prep | Interview Call Letter – ${roleLabel}`;
+    const subject = "We’re Excited to Meet You! | Interview with FACE Prep";
 
     const body = `Hi ${name},
 
@@ -231,16 +232,22 @@ Here’s when we’re meeting:
 
 Interview Details
 Mode: Virtual (Online)
+Meeting Link: ${link || "[Insert Link]"}
 Date: ${date || "[Insert Date]"}
 Time: ${time || "[Insert Time]"}
 Dress Code: Formal / Business Attire
-Meeting Link: ${link || "[Insert Link]"}
-${panelName ? `\nMeet the People You’ll Be Talking To\n${panelName}${panelDesignation ? `\n${panelDesignation}` : ""}${panelLinkedin ? `\n${panelLinkedin}` : ""}\n` : ""}
+${panelName ? `\nMeet the People You’ll Be Talking To\n\nYou’ll be meeting a few members of our team who are excited to hear your story:\n\n${panelName}${panelDesignation ? `\n${panelDesignation}` : ""}${panelLinkedin ? `\n${panelLinkedin}` : ""}\n` : ""}
 What can you expect?
+
 Not an interrogation. Not a rapid-fire Q&A. 😊
+
 Just a good conversation about you, your experiences, your ideas, and where you want to go next.
+
 We’ll also tell you more about life at FACE Prep, the team you could be working with, the role, and the kind of impact you can create here.
+
 So come as you are, bring your questions, and let’s see where this conversation takes us!
+
+P.S. Want a sneak peek into what it’s like to be part of FACE Prep? Check out @lifeatfaceprep on Instagram and meet the people behind what we do.
 
 Virtual Interview Guidelines
 To ensure a smooth and professional interview experience, please follow the instructions below:
@@ -250,8 +257,6 @@ To ensure a smooth and professional interview experience, please follow the inst
 - Attend the interview from a quiet and well-lit location. Please minimize background noise or interruptions.
 - Dress in formal and presentable clothing as you would for an in-person interview.
 - Join the virtual meeting at least 10 minutes before the scheduled time to check your audio, video, and connection settings.
-
-We request you to kindly acknowledge this email and confirm your availability for the scheduled interview.
 
 Looking forward to meeting you! 🚀`;
 
@@ -311,19 +316,22 @@ Looking forward to meeting you! 🚀`;
 
       ${renderPanelCardHtml(panelName, panelDesignation, panelLinkedin)}
 
-      <!-- WHAT TO EXPECT BOX -->
-      <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:18px 22px;margin-bottom:28px;">
-        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#92400E;">
+      <!-- WHAT TO EXPECT -->
+      <div style="margin-bottom:28px;">
+        <p style="margin:0 0 10px;font-size:15px;font-weight:bold;color:#1E293B;">
           💡 What can you expect?
         </p>
-        <p style="margin:0 0 8px;font-size:13px;color:#78350F;font-weight:500;">
+        <p style="margin:0 0 10px;font-size:14px;color:#1E293B;font-weight:600;">
           Not an interrogation. Not a rapid-fire Q&A. 😊
         </p>
-        <p style="margin:0 0 8px;font-size:13px;color:#92400E;line-height:1.6;">
+        <p style="margin:0 0 10px;font-size:14px;color:#4A5568;line-height:1.7;">
           Just a good conversation about you, your experiences, your ideas, and where you want to go next.
         </p>
-        <p style="margin:0;font-size:13px;color:#92400E;line-height:1.6;">
+        <p style="margin:0 0 14px;font-size:14px;color:#4A5568;line-height:1.7;">
           We’ll also tell you more about life at FACE Prep, the team you could be working with, the role, and the kind of impact you can create here. So come as you are, bring your questions, and let’s see where this conversation takes us!
+        </p>
+        <p style="margin:0;font-size:13px;color:#64748B;line-height:1.6;font-style:italic;">
+          P.S. Want a sneak peek into what it’s like to be part of FACE Prep? Check out <a href="https://instagram.com/lifeatfaceprep" target="_blank" style="color:#f05136;text-decoration:none;font-weight:600;">@lifeatfaceprep</a> on Instagram and meet the people behind what we do.
         </p>
       </div>
 
@@ -711,19 +719,22 @@ Looking forward to meeting you! 🚀`;
 
       ${renderPanelCardHtml(panelName, panelDesignation, panelLinkedin)}
 
-      <!-- WHAT TO EXPECT BOX -->
-      <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:18px 22px;margin-bottom:28px;">
-        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#92400E;">
+      <!-- WHAT TO EXPECT -->
+      <div style="margin-bottom:28px;">
+        <p style="margin:0 0 10px;font-size:15px;font-weight:bold;color:#1E293B;">
           💡 What can you expect?
         </p>
-        <p style="margin:0 0 8px;font-size:13px;color:#78350F;font-weight:500;">
+        <p style="margin:0 0 10px;font-size:14px;color:#1E293B;font-weight:600;">
           Not an interrogation. Not a rapid-fire Q&A. 😊
         </p>
-        <p style="margin:0 0 8px;font-size:13px;color:#92400E;line-height:1.6;">
+        <p style="margin:0 0 10px;font-size:14px;color:#4A5568;line-height:1.7;">
           Just a good conversation about you, your experiences, your ideas, and where you want to go next.
         </p>
-        <p style="margin:0;font-size:13px;color:#92400E;line-height:1.6;">
+        <p style="margin:0 0 14px;font-size:14px;color:#4A5568;line-height:1.7;">
           We’ll also tell you more about life at FACE Prep, the team you could be working with, the role, and the kind of impact you can create here. So come as you are, bring your questions, and let’s see where this conversation takes us!
+        </p>
+        <p style="margin:0;font-size:13px;color:#64748B;line-height:1.6;font-style:italic;">
+          P.S. Want a sneak peek into what it’s like to be part of FACE Prep? Check out <a href="https://instagram.com/lifeatfaceprep" target="_blank" style="color:#f05136;text-decoration:none;font-weight:600;">@lifeatfaceprep</a> on Instagram and meet the people behind what we do.
         </p>
       </div>
 
