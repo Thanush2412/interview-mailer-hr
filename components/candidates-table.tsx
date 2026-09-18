@@ -134,7 +134,8 @@ function encodeEmojisToEntities(text: string): string {
   );
 }
 
-function wrapCallLetterHtml(subtitle: string, contentHtml: string): string {
+function wrapCallLetterHtml(arg1: string, arg2?: string): string {
+  const contentHtml = arg2 !== undefined ? arg2 : arg1;
   const safeContent = encodeEmojisToEntities(contentHtml);
   return `<!DOCTYPE html>
 <html lang="en">
@@ -154,9 +155,6 @@ function wrapCallLetterHtml(subtitle: string, contentHtml: string): string {
               <img src="https://faceprep.in/images/brand/wordmark-on-dark.png" alt="FACE Prep" width="140" style="display:block;border:0;margin-bottom:14px;height:auto;"/>
               <p style="margin:0;font-family:Georgia,serif;font-size:24px;font-weight:bold;color:#ffffff;line-height:1.2;">
                 Interview Call Letter
-              </p>
-              <p style="margin:4px 0 0;font-size:12px;color:#f05136;font-weight:bold;letter-spacing:0.05em;text-transform:uppercase;">
-                ${subtitle}
               </p>
             </td>
           </tr>
